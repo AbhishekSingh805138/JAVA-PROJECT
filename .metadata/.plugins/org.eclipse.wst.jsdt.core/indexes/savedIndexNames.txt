@@ -1,0 +1,6 @@
+INDEX VERSION 1.4+C:\capstone-project-day1-work-main\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
+1050042363.index
+2960399442.index
+1698827149.index
+2862044391.index
+2463124329.index

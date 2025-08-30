@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?><project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="account-service">
+        <property name="context-root" value="account-service"/>
+        <property name="java-output-path" value="/account-service/target/classes"/>
+    </wb-module>
+</project-modules>
