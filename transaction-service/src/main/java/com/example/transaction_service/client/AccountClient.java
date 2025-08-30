@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "account-service")   // this matches the spring.application.name of account-service
 public interface AccountClient {
 
-    @PutMapping("/accounts/{accountId}/update-balance")
+    @PutMapping("/accounts/{id}/updateBalance")
     void updateBalance(
-            @PathVariable("accountId") Integer accountId,
-            @RequestParam("amount") Double amount
+            @PathVariable("id") Integer id,
+            @RequestParam Double amount
     );
 }

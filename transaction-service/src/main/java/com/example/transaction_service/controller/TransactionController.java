@@ -38,26 +38,31 @@ public class TransactionController {
     public Transaction createTransaction(@RequestBody Transaction transaction) {
         Double amount = transaction.getAmount();
 
-        switch (transaction.getTransactionType().toUpperCase()) {
-            case "DEPOSIT":
-                // add balance to account
-                accountClient.updateBalance(transaction.getToAccountId(), amount);
-                break;
+        try {
+            switch (transaction.getTransactionType().toUpperCase()) {
+                case "DEPOSIT":
+                    // add balance to account
+                    accountClient.updateBalance(transaction.getToAccountId(), amount);
+                    break;
 
-            case "WITHDRAW":
-                // deduct balance from account
-                accountClient.updateBalance(transaction.getFrmAccountId(), -amount);
-                break;
+                case "WITHDRAW":
+                    // deduct balance from account
+                    accountClient.updateBalance(transaction.getFrmAccountId(), -amount);
+                    break;
 
-            case "TRANSFER":
-                // deduct from one account
-                accountClient.updateBalance(transaction.getFrmAccountId(), -amount);
-                // add to another account
-                accountClient.updateBalance(transaction.getToAccountId(), amount);
-                break;
+                case "TRANSFER":
+                    // deduct from one account
+                    accountClient.updateBalance(transaction.getFrmAccountId(), -amount);
+                    // add to another account
+                    accountClient.updateBalance(transaction.getToAccountId(), amount);
+                    break;
 
-            default:
-                throw new IllegalArgumentException("Invalid transaction type: " + transaction.getTransactionType());
+                default:
+                    throw new IllegalArgumentException("Invalid transaction type: " + transaction.getTransactionType());
+            }
+        } catch (Exception e) {
+            // Handle account not found or other errors from account service
+            throw new RuntimeException("Failed to update account balance: " + e.getMessage());
         }
 
         // save transaction in DB

@@ -57,6 +57,6 @@ public class AccountController {
         return accountRepository.findById(id).map(account -> {
             account.setAccountBalance(account.getAccountBalance() + amount);
             return accountRepository.save(account);
-        }).orElseThrow(() -> new RuntimeException("Account not found"));
+        }).orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + id));
     }
 }
