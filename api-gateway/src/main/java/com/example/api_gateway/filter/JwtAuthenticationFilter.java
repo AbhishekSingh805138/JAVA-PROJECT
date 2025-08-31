@@ -46,6 +46,7 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             }
 
             String token = authHeader.substring(7);
+            System.out.println("Extracted token: " + token);
 
             try {
                 // ✅ Use parserBuilder() for new JJWT versions
@@ -55,8 +56,12 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                         .parseClaimsJws(token)
                         .getBody();
 
+                System.out.println("Claims: " + claims);
                 String username = claims.getSubject();
+                System.out.println("Username from token: " + username);
+                
                 if (username == null || username.isEmpty()) {
+                    System.out.println("Invalid username in token");
                     return this.onError(exchange, "Invalid JWT token", HttpStatus.UNAUTHORIZED);
                 }
 
@@ -68,6 +73,8 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                         .build();
 
             } catch (Exception e) {
+                System.out.println("JWT validation failed: " + e.getMessage());
+                e.printStackTrace();
                 return this.onError(exchange, "JWT validation failed: " + e.getMessage(), HttpStatus.UNAUTHORIZED);
             }
 

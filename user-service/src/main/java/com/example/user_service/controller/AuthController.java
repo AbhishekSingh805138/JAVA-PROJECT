@@ -6,6 +6,7 @@ import com.example.user_service.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
@@ -29,15 +30,21 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login(@RequestBody User user) {
-        User dbUser = userRepository.findByUsername(user.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (passwordEncoder.matches(user.getPassword(), dbUser.getPassword())) {
-            // ✅ Return JWT token instead of plain text
-            String token = jwtUtil.generateToken(dbUser.getUsername());
-            return "Bearer " + token;
-        } else {
-            throw new RuntimeException("Invalid credentials!");
-        }
+    List<User> dbUsers = userRepository.findAllByUsername(user.getUsername());
+    if (dbUsers.isEmpty()) {
+        throw new RuntimeException("User not found");
+    }
+    
+    User dbUser = dbUsers.get(0); // Select the first user
+    
+    if (passwordEncoder.matches(user.getPassword(), dbUser.getPassword())) {
+        // ✅ Return JWT token instead of plain text
+        String token = jwtUtil.generateToken(dbUser.getUsername());
+        return "Bearer " + token;
+    } else {
+        throw new RuntimeException("Invalid credentials!");
     }
 }
+ 
+}
+

@@ -26,7 +26,7 @@ public class JwtUtil {
     }
 
     public String generateToken(String username) {
-        Date now = new Date();
+        Date now = new Date(System.currentTimeMillis());
         Date expiry = new Date(System.currentTimeMillis() + expirationMillis);
         return Jwts.builder()
                 .setSubject(username)
@@ -45,7 +45,12 @@ public class JwtUtil {
     }
 
     private boolean isTokenExpired(String token) {
-        return extractAllClaims(token).getExpiration().before(new Date());
+        Date expiration = extractAllClaims(token).getExpiration();
+        Date now = new Date();
+        System.out.println("Token expiration: " + expiration);
+        System.out.println("Current time: " + now);
+        System.out.println("Is token expired: " + expiration.before(now));
+        return expiration.before(now);
     }
 
     private Claims extractAllClaims(String token) {
