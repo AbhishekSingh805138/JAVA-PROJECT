@@ -1,50 +1,74 @@
 package com.example.user_service.controller;
 
+import com.example.user_service.dto.LoginRequest;
 import com.example.user_service.model.User;
 import com.example.user_service.repository.UserRepository;
 import com.example.user_service.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UserRepository userRepository;
+    public AuthController(JwtUtil jwtUtil,
+                          UserRepository userRepository,
+                          PasswordEncoder passwordEncoder) {
+        this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @PostMapping("/register")
-    public String register(@RequestBody User user) {
+    @PostMapping(value = "/register", produces = "text/plain")
+    public ResponseEntity<String> register(@RequestBody User user) {
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password required");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
-        return "User registered successfully!";
+        return ResponseEntity.ok("User registered successfully!");
     }
 
-    @PostMapping("/login")
-    public String login(@RequestBody User user) {
-    List<User> dbUsers = userRepository.findAllByUsername(user.getUsername());
-    if (dbUsers.isEmpty()) {
-        throw new RuntimeException("User not found");
-    }
-    
-    User dbUser = dbUsers.get(0); // Select the first user
-    
-    if (passwordEncoder.matches(user.getPassword(), dbUser.getPassword())) {
-        // ✅ Return JWT token instead of plain text
+    // Returns plain text like: "Bearer eyJ..."
+    @PostMapping(value = "/login", produces = "text/plain")
+    public ResponseEntity<String> login(@RequestBody LoginRequest req) {
+        List<User> dbUsers = userRepository.findAllByUsername(req.getUsername());
+        if (dbUsers.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+        }
+
+        User dbUser = dbUsers.get(0);
+        String stored = dbUser.getPassword();
+
+        boolean passwordOk;
+        if (stored != null && (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$"))) {
+            // Stored as bcrypt
+            passwordOk = passwordEncoder.matches(req.getPassword(), stored);
+        } else {
+            // Legacy plain-text support
+            passwordOk = req.getPassword().equals(stored);
+        }
+
+        if (!passwordOk) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
+        }
+
+        // Upgrade legacy plain-text password to bcrypt on successful login
+        if (stored != null && !(stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$"))) {
+            dbUser.setPassword(passwordEncoder.encode(req.getPassword()));
+            userRepository.save(dbUser);
+        }
+
         String token = jwtUtil.generateToken(dbUser.getUsername());
-        return "Bearer " + token;
-    } else {
-        throw new RuntimeException("Invalid credentials!");
+        return ResponseEntity.ok("Bearer " + token);
     }
-}
- 
 }
 
