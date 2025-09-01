@@ -2,7 +2,9 @@ package com.example.account_service.controller;
 
 import com.example.account_service.model.Account;
 import com.example.account_service.repository.AccountRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -57,6 +59,6 @@ public class AccountController {
         return accountRepository.findById(id).map(account -> {
             account.setAccountBalance(account.getAccountBalance() + amount);
             return accountRepository.save(account);
-        }).orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + id));
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found with ID: " + id));
     }
 }

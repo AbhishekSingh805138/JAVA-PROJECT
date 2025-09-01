@@ -3,7 +3,10 @@ package com.example.transaction_service.controller;
 import com.example.transaction_service.model.Transaction;
 import com.example.transaction_service.repository.TransactionRepository;
 import com.example.transaction_service.client.AccountClient;
+import feign.FeignException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -60,9 +63,15 @@ public class TransactionController {
                 default:
                     throw new IllegalArgumentException("Invalid transaction type: " + transaction.getTransactionType());
             }
+        } catch (FeignException e) {
+            if (e.status() == 404) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found while updating balance");
+            }
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Account service error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (Exception e) {
-            // Handle account not found or other errors from account service
-            throw new RuntimeException("Failed to update account balance: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update account balance");
         }
 
         // save transaction in DB
