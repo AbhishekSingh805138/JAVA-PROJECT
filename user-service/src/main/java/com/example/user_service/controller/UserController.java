@@ -2,6 +2,7 @@ package com.example.user_service.controller;
 
 import com.example.user_service.model.User;
 import com.example.user_service.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,9 +12,11 @@ import java.util.List;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @GetMapping
@@ -35,7 +38,9 @@ public class UserController {
     public User updateUser(@PathVariable Integer id, @RequestBody User user) {
         return userRepository.findById(id).map(existing -> {
             existing.setUsername(user.getUsername());
-            existing.setPassword(user.getPassword());
+            if (user.getPassword() != null && !user.getPassword().isBlank()) {
+                existing.setPassword(passwordEncoder.encode(user.getPassword()));
+            }
             existing.setAddress(user.getAddress());
             return userRepository.save(existing);
         }).orElse(null);
